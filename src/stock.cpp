@@ -4,6 +4,7 @@
 using namespace std;
 
 namespace AV{
+    // the data capture functions of this namespace are built with the service of alpha vantage.
     struct Stock{
         public:
             Stock(const string name, const string function="TIMES_SERIES_INTRADAY") : name{name} {
