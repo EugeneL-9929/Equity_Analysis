@@ -3,7 +3,7 @@
 #include "curl/curl.h"
 using namespace std;
 
-namespace SD{
+namespace AV{
     struct Stock{
         public:
             Stock(const string name, const string function="TIMES_SERIES_INTRADAY") : name{name} {

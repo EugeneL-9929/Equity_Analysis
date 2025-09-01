@@ -9,6 +9,6 @@ using namespace std;
 
 int main(){
     cout << "hello, world!" << endl;
-    SD::Stock stock{"QQQ"};
+    AV::Stock stock{"QQQ"};
     return 0;
 }
