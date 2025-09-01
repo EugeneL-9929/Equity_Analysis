@@ -11,16 +11,31 @@ namespace AV{
                 this->function = "function=" + function;
                 cout << "Stock " << name << " online!" <<endl;
             }
+
+            string get_data(){
+                string readBuffer;
+                CURL *curl;
+                CURLcode res;
+                
+            }
+
             string get_name(){
                 return this->name;
             } 
+            
+            void change_api_key(const string &new_api_key){
+                this->api_key = new_api_key;
+            }
+
             ~Stock(){
                 cout << "Stock " << name << " offline!" << endl;
             } 
+        
         private:
             string name;
             string function{};
-            string api_url = "https://www.alphavantage.co/query?";
+            const string api_url = "https://www.alphavantage.co/query?";
+            string api_key = "O9QU43NA2E4L5451";
         };
 
 }
