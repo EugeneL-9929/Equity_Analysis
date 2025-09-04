@@ -40,7 +40,28 @@ namespace AV
 
         Stock(const Stock &other) : name{other.name}
         {
-            cout << "Stock " << other.name << " being copied successfully!" << endl; 
+            cout << "Stock " << other.name << " being copied successfully!" << endl;
+            this->name = other.name;
+            this->symbol = other.symbol;
+            this->function = other.function;
+            this->outputsize = other.outputsize;
+            this->interval = other.interval;
+            this->api_key = other.api_key;
+            this->query_url = other.query_url;
+        }
+
+        Stock &operator=(Stock &&other)
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+            return *this;
+        }
+
+        Stock(Stock &&other)
+        {
+            cout << "Stock " << other.name << " being moved successfully!" << endl;
         }
 
         string get_marketData()
