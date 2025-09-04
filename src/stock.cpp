@@ -28,6 +28,13 @@ namespace AV
             {
                 return *this;
             }
+            this->name = other.name;
+            this->symbol = other.symbol;
+            this->function = other.function;
+            this->outputsize = other.outputsize;
+            this->interval = other.interval;
+            this->api_key = other.api_key;
+            this->query_url = other.query_url;
             return *this;
         }
 
