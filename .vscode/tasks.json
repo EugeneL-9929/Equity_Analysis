@@ -12,6 +12,7 @@
                 "-g",
                 "${workspaceFolder}\\src\\main.cpp",
                 "${workspaceFolder}\\src\\stock.cpp",
+                "${workspaceFolder}\\src\\structure.cpp",
                 "-o",
                 "${workspaceFolder}\\build\\main.exe",
                 "-L",
