@@ -7,17 +7,22 @@ using namespace std;
 
 struct Content
 {
-    nlohmann::json toJson()
+public:
+    nlohmann::json toJson() const
     {
         nlohmann::json backup{};
         return backup;
+    }
+
+    void loadJson(const nlohmann::json &reload)
+    {
     }
 };
 
 struct NodeN2N
 {
 public:
-    NodeN2N(){cout << "Loading structure..."}
+    NodeN2N() { cout << "Loading structure..." << endl; }
 
     NodeN2N(const int &layerNumber, const int &serialNumber) : layerNumber{layerNumber}, serialNumber{serialNumber}
     {
@@ -48,6 +53,7 @@ public:
         nlohmann::json backup;
         backup["layerNumber"] = this->layerNumber;
         backup["serialNumber"] = this->serialNumber;
+        backup["content"] = this->nodeContent.toJson();
         for (const auto &node : this->childPtrNodes)
             backup["children"][node.first] = node.second->toJson();
         return backup;
@@ -57,12 +63,13 @@ public:
     {
         this->layerNumber = reload["layerNumber"];
         this->serialNumber = reload["serialNumber"];
+        this->nodeContent.loadJson(reload["content"]);
         for (const auto &json : reload["children"].items())
-            {
-                NodeN2N *childNode = new NodeN2N{};
-                childNode->loadJson(json.value());
-                this->addChild(childNode);
-            }
+        {
+            NodeN2N *childNode = new NodeN2N{};
+            childNode->loadJson(json.value());
+            this->addChild(childNode);
+        }
     }
 
     map<string, NodeN2N *> parentPtrNodes{};
@@ -78,49 +85,4 @@ private:
     int childCount{};
     map<string, NodeN2N *> childPtrNodes{};
     Content nodeContent;
-};
-
-struct Net
-{
-public:
-    Net()
-    {
-        cout << "Construct net structure!" << endl;
-    }
-
-private:
-};
-
-struct Tree
-{
-public:
-    Tree(int layerNumber, int serialNumber) : layerNumber{layerNumber}, serialNumber{serialNumber}, parentNode{nullptr}
-    {
-        cout << "" << endl;
-    }
-
-    nlohmann::json toJson()
-    {
-        nlohmann::json dataJson;
-        dataJson = {};
-        return dataJson;
-    }
-
-    void addChild(const Tree &childNode)
-    {
-        this->children.push_back();
-    }
-
-    static Tree loadJson(nlohmann::json dataJson)
-    {
-        Tree rootNode{dataJson["layerNumber"]};
-        return rootNode;
-    }
-
-private:
-    int layerNumber;
-    int serialNumber;
-    Tree *parentNode;
-    vector<Tree> children{};
-    vector<Tree> layerRepeated{};
 };
