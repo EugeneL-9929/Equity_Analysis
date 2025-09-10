@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include "nlohmann/json.hpp"
+
 using namespace std;
 
 struct Content
@@ -29,9 +30,9 @@ public:
         cout << "Construct node " << layerNumber << "." << serialNumber << "!" << endl;
     }
 
-    int getSerialNumber() { return this->serialNumber; }
+    int getSerialNumber() const { return this->serialNumber; }
 
-    int getLayerNumber() { return this->layerNumber; }
+    int getLayerNumber() const { return this->layerNumber; }
 
     void addChild()
     {

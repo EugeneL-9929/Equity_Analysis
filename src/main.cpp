@@ -4,14 +4,13 @@
 #include <string>
 #include "stock.cpp"
 
-
 using namespace std;
 
-int main(){
+int main()
+{
     cout << "hello, world!" << endl;
     AV::Stock stock{"QQQ"};
-    stock.get_marketData();
+    cout << stock.get_marketData() << endl;
+
     return 0;
 }
-
-
