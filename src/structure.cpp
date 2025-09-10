@@ -17,6 +17,8 @@ struct Content
 struct NodeN2N
 {
 public:
+    NodeN2N(){cout << "Loading structure..."}
+
     NodeN2N(const int &layerNumber, const int &serialNumber) : layerNumber{layerNumber}, serialNumber{serialNumber}
     {
         cout << "Construct node " << layerNumber << "." << serialNumber << "!" << endl;
@@ -26,11 +28,19 @@ public:
 
     int getLayerNumber() { return this->layerNumber; }
 
-    void addChild(const Content &content)
+    void addChild()
     {
         NodeN2N *newNode = new NodeN2N{this->layerNumber + 1, this->childCount};
         this->childPtrNodes[to_string(this->layerNumber + 1) + "." + to_string(this->childCount)] = newNode;
         this->childCount++;
+        newNode->parentPtrNodes[to_string(this->layerNumber) + "." + to_string(this->serialNumber)] = this;
+    }
+
+    void addChild(NodeN2N *node)
+    {
+        this->childPtrNodes[to_string(this->layerNumber + 1) + "." + to_string(this->childCount)] = node;
+        this->childCount++;
+        node->parentPtrNodes[to_string(this->layerNumber) + "." + to_string(this->serialNumber)] = this;
     }
 
     nlohmann::json toJson() const
@@ -38,8 +48,6 @@ public:
         nlohmann::json backup;
         backup["layerNumber"] = this->layerNumber;
         backup["serialNumber"] = this->serialNumber;
-        for (const auto &node : this->parentPtrNodes)
-            backup['parent'][node.first] = node.second->toJson();
         for (const auto &node : this->childPtrNodes)
             backup["children"][node.first] = node.second->toJson();
         return backup;
@@ -47,14 +55,14 @@ public:
 
     void loadJson(const nlohmann::json &reload)
     {
-        if (reload.contains("layerNumber"))
-        {
-            layerNumber = reload["layerNumber"];
-        }
-        if (reload.contains("serialNumber"))
-        {
-            serialNumber = reload["serialNumber"];
-        }
+        this->layerNumber = reload["layerNumber"];
+        this->serialNumber = reload["serialNumber"];
+        for (const auto &json : reload["children"].items())
+            {
+                NodeN2N *childNode = new NodeN2N{};
+                childNode->loadJson(json.value());
+                this->addChild(childNode);
+            }
     }
 
     map<string, NodeN2N *> parentPtrNodes{};
