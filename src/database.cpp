@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sqlite3.h>
 #include <string>
+#include <vector>
 #include "nlohmann/json.hpp"
 
 using namespace std;
@@ -128,11 +129,18 @@ public:
             sqlite3_bind_int(stmt_stock, 5, stoi(stockData["volume"].get<string>()));
             sqlite3_bind_int(stmt_stock, 6, newId);
             sqlite3_bind_int(stmt_stock, 7, stockId);
-            if (sqlite3_step(stmt_stock) != SQLITE_DONE)
+            vector<string> pairFields{"TIME_ID", "STOCK_ID"};
+            vector<string> pairName{to_string(newId), to_string(stockId)};
+            if (getIdsByFields("STOCK", pairFields, pairFields, pairName).empty())
             {
-                cout << "insert data at time " << dataTime << " failed!" << endl;
+                if (sqlite3_step(stmt_stock) != SQLITE_DONE)
+                {
+                    cout << "insert data at time " << dataTime << " failed!" << endl;
+                }
+                sqlite3_reset(stmt_stock);
             }
-            sqlite3_reset(stmt_stock);
+            else
+                cout << "wow! repeat!!!" << endl;
         }
         sqlite3_finalize(stmt_name);
         sqlite3_finalize(stmt_time);
@@ -197,6 +205,38 @@ private:
         }
         sqlite3_finalize(stmt);
         return returnValue;
+    }
+
+    vector<int> getIdsByFields(string tableName, vector<string> observeFields, vector<string> fields, vector<string> names)
+    {
+        vector<int> returnValues{};
+        string command = "SELECT ";
+        for (size_t i = 0; i < observeFields.size(); i++)
+        {
+            command += observeFields[i];
+            if (i != observeFields.size() - 1)
+                command += ", ";
+        }
+        command = command + " FROM " + tableName + "WHERE ";
+        for (size_t i = 0; i < fields.size(); i++)
+        {
+            command = command + fields[i] + "=" + names[i];
+            if (i != fields.size() - 1)
+                command += " AND ";
+        }
+        sqlite3_stmt *stmt;
+        sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            for (size_t i = 0; i < observeFields.size(); i++)
+                returnValues.push_back(sqlite3_column_int(stmt, i));
+        }
+        else
+        {
+            cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+        }
+        sqlite3_finalize(stmt);
+        return returnValues;
     }
 
     sqlite3 *database;
