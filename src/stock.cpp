@@ -10,7 +10,7 @@ namespace AV
     struct Stock
     {
     public:
-        Stock(const string name, const string function = "TIME_SERIES_INTRADAY", const string outputsize = "full", const string interval = "5min") : name{name}
+        Stock(const string name, const string function = "TIME_SERIES_INTRADAY", const string outputsize = "full", const string interval = "5min") : name{name}, intervalGetPurpose{interval}
         {
             this->function += function;
             this->symbol += name;
@@ -64,7 +64,7 @@ namespace AV
             cout << "Stock " << other.name << " being moved successfully!" << endl;
         }
 
-        string get_marketData()
+        nlohmann::json getMarketData()
         {
             string readBuffer;
             CURL *curl;
@@ -95,17 +95,44 @@ namespace AV
                 return "";
             }
 
-            cout << readBuffer << endl;
-
-            return readBuffer;
+            nlohmann::json returnValue = nlohmann::json::parse(readBuffer)["Time Series (" + this->intervalGetPurpose + ")"];
+            for (const auto &data : returnValue.items())
+            {
+                if (data.value().contains("1. open"))
+                {
+                    returnValue[data.key()]["open"] = returnValue[data.key()]["1. open"];
+                    returnValue[data.key()].erase("1. open");
+                }
+                if (data.value().contains("2. high"))
+                {
+                    returnValue[data.key()]["high"] = returnValue[data.key()]["2. high"];
+                    returnValue[data.key()].erase("2. high");
+                }
+                if (data.value().contains("3. low"))
+                {
+                    returnValue[data.key()]["low"] = returnValue[data.key()]["3. low"];
+                    returnValue[data.key()].erase("3. low");
+                }
+                if (data.value().contains("4. close"))
+                {
+                    returnValue[data.key()]["close"] = returnValue[data.key()]["4. close"];
+                    returnValue[data.key()].erase("4. close");
+                }
+                if (data.value().contains("5. volume"))
+                {
+                    returnValue[data.key()]["volume"] = returnValue[data.key()]["5. volume"];
+                    returnValue[data.key()].erase("5. volume");
+                }
+            }
+            return returnValue;
         }
 
-        string get_name() const
+        string getName() const
         {
             return this->name;
         }
 
-        void set_apiKey(const string &new_api_key)
+        void setApiKey(const string &new_api_key)
         {
             this->api_key = "apikey=" + new_api_key;
         }
@@ -128,9 +155,10 @@ namespace AV
         string function{"&function="};
         string outputsize{"&outputsize="};
         string interval{"&interval="};
-        string api_key = "&apikey=O9QU43NA2E4L5451";
+        string api_key = "&apikey=K7G3VVX3F6EAFJL5";
         const string api_url = "https://www.alphavantage.co/query?";
         string query_url;
+        string intervalGetPurpose;
     };
 
     struct Fx

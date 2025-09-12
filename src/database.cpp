@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sqlite3.h>
 #include <string>
+#include "nlohmann/json.hpp"
 
 using namespace std;
 
@@ -22,6 +23,7 @@ public:
         sqlite3_finalize(stmt);
         initializeTimeTable();
         initializeStockTable();
+        initializeStockNameTable();
     }
 
     void initializeTimeTable()
@@ -51,7 +53,9 @@ public:
             "LOW FLOAT,"
             "VOLUME INTEGER,"
             "TIME_ID INTEGER,"
-            "FOREIGN KEY (TIME_ID) REFERENCES TIME (ID) ON DELETE CASCADE ON UPDATE CASCADE);";
+            "STOCK_ID INTEGER,"
+            "FOREIGN KEY (TIME_ID) REFERENCES TIME (ID) ON DELETE CASCADE ON UPDATE CASCADE,"
+            "FOREIGN KEY (STOCK_ID) REFERENCES EQUITY (ID) ON DELETE CASCADE ON UPDATE CASCADE);";
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
         if (sqlite3_step(stmt) == SQLITE_DONE)
@@ -61,27 +65,67 @@ public:
         sqlite3_finalize(stmt);
     }
 
-    void addStockTable(float open, float close, float high, float low, int volume)
+    void initializeStockNameTable()
     {
         string command =
-            "INSERT OR IGNORE INTO TIME (DATA_TIME) VALUES (?);"
-            "INSERT INTO STOCK (OPEN, CLOSE, HIGH, LOW, VOLUME) VALUES (?, ?, ?, ?);";
-
+            "CREATE TABLE IF NOT EXISTS STOCKNAME("
+            "ID INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,"
+            "NAME VARCHAR(20) UNIQUE);"
+            "CREATE INDEX IF NOT EXISTS IDX_NAME ON STOCKNAME(NAME);";
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
-
-        sqlite3_bind_double(stmt, 1, open);
-        sqlite3_bind_double(stmt, 2, close);
-        sqlite3_bind_double(stmt, 3, high);
-        sqlite3_bind_double(stmt, 4, low);
-        sqlite3_bind_double(stmt, 5, volume);
-        sqlite3_bind_double(stmt, 6, open);
-
         if (sqlite3_step(stmt) == SQLITE_DONE)
-            cout << "finish stock table initialization!" << endl;
+            cout << "finish stock name table initialization!" << endl;
         else
             cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
         sqlite3_finalize(stmt);
+    }
+
+    void addStockTable(const nlohmann::json &jsonData, string stockName)
+    {
+
+        string command_name = "INSERT OR IGNORE INTO STOCKNAME (NAME) VALUES (?);";
+        sqlite3_stmt *stmt_name;
+        string command_time = "INSERT OR IGNORE INTO TIME (DATA_TIME) VALUES (?);";
+        sqlite3_stmt *stmt_time;
+        string command_stock = "INSERT INTO STOCK (OPEN, CLOSE, HIGH, LOW, VOLUME, TIME_ID, STOCK_ID) VALUES (?, ?, ?, ?, ?, ?, ?);";
+        sqlite3_stmt *stmt_stock;
+        sqlite3_prepare_v2(this->database, command_name.c_str(), -1, &stmt_name, nullptr);
+        sqlite3_prepare_v2(this->database, command_time.c_str(), -1, &stmt_time, nullptr);
+        sqlite3_prepare_v2(this->database, command_stock.c_str(), -1, &stmt_stock, nullptr);
+        if (sqlite3_step(stmt_name) != SQLITE_DONE)
+        {
+            cout << "insert stock name " << stockName << " failed!" << endl;
+            cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+        }
+        int stockId = this->getNameId("STOCKNAME", stockName);
+        for (const auto &data : jsonData.items())
+        {
+            const string &dataTime = data.key();
+            const auto &stockData = data.value();
+            sqlite3_bind_text(stmt_time, 1, dataTime.c_str(), -1, SQLITE_TRANSIENT);
+            cout << stockData << endl;
+            if (sqlite3_step(stmt_time) != SQLITE_DONE)
+            {
+                cout << "insert time " << dataTime << " failed!" << endl;
+                cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+            }
+            int newId = this->latestId("TIME");
+            sqlite3_bind_double(stmt_stock, 1, stockData["open"].get<double>());
+            sqlite3_bind_double(stmt_stock, 2, stockData["close"].get<double>());
+            sqlite3_bind_double(stmt_stock, 3, stockData["high"].get<double>());
+            sqlite3_bind_double(stmt_stock, 4, stockData["low"].get<double>());
+            sqlite3_bind_int(stmt_stock, 5, stockData["volume"].get<int>());
+            sqlite3_bind_int(stmt_stock, 6, newId);
+            sqlite3_bind_int(stmt_stock, 7, stockId);
+            if (sqlite3_step(stmt_stock) != SQLITE_DONE)
+            {
+                cout << "insert data at time " << dataTime << " failed!" << endl;
+            }
+        }
+        sqlite3_finalize(stmt_name);
+        sqlite3_finalize(stmt_time);
+        sqlite3_finalize(stmt_stock);
     }
 
     void selfDefinedSQLCommand(const string &command)
@@ -105,6 +149,43 @@ public:
     }
 
 private:
+    int latestId(string tableName)
+    {
+        int returnValue{};
+        string command = "SELECT ID FROM " + tableName + " ORDER BY ID DESC LIMIT 1";
+        sqlite3_stmt *stmt;
+        sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            returnValue = sqlite3_column_int(stmt, 0);
+            cout << "lastest id is " << returnValue << endl;
+        }
+        else
+        {
+            cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+        }
+        return returnValue;
+    }
+
+    int getNameId(string tableName, string name)
+    {
+        int returnValue{};
+        string command = "SELECT ID FROM " + tableName + " WHERE NAME=?";
+        sqlite3_stmt *stmt;
+        sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
+        sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            returnValue = sqlite3_column_int(stmt, 0);
+            cout << name << " id is " << returnValue << endl;
+        }
+        else
+        {
+            cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+        }
+        return returnValue;
+    }
+
     sqlite3 *database;
     const string dbPath;
 };
