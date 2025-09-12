@@ -19,6 +19,7 @@ int main()
     AV::Stock stockQQQ{"QQQ"};
     db.addStockTable(stockQQQ.getMarketData(), "QQQ");
 
+    /*
     AV::Stock stockSPY{"SPY"};
     db.addStockTable(stockSPY.getMarketData(), "SPY");
 
@@ -27,6 +28,7 @@ int main()
 
     AV::Stock stockGLDM{"GLDM"};
     db.addStockTable(stockGLDM.getMarketData(), "GLDM");
+    */
 
     return 0;
 }

@@ -95,9 +95,9 @@ public:
         sqlite3_prepare_v2(this->database, command_time.c_str(), -1, &stmt_time, nullptr);
         sqlite3_prepare_v2(this->database, command_stock.c_str(), -1, &stmt_stock, nullptr);
 
-        sqlite3_bind_text(stmt_name, 1, stockName.c_str(), -1, SQLITE_TRANSIENT);
         if (getIdByField("STOCKNAME", "NAME", stockName) == -1)
         {
+            sqlite3_bind_text(stmt_name, 1, stockName.c_str(), -1, SQLITE_TRANSIENT);
             if (sqlite3_step(stmt_name) != SQLITE_DONE)
             {
                 cout << "insert stock name " << stockName << " failed!" << endl;
@@ -111,9 +111,9 @@ public:
         {
             string dataTime = data.key();
             auto stockData = data.value();
-            sqlite3_bind_text(stmt_time, 1, dataTime.c_str(), -1, SQLITE_TRANSIENT);
             if (getIdByField("TIME", "DATA_TIME", dataTime) == -1)
             {
+                sqlite3_bind_text(stmt_time, 1, dataTime.c_str(), -1, SQLITE_TRANSIENT);
                 if (sqlite3_step(stmt_time) != SQLITE_DONE)
                 {
                     cout << "insert time " << dataTime << " failed!" << endl;
@@ -122,17 +122,17 @@ public:
                 sqlite3_reset(stmt_time);
             }
             int newId = this->getIdByField("TIME", "DATA_TIME", dataTime);
-            sqlite3_bind_double(stmt_stock, 1, stod(stockData["open"].get<string>()));
-            sqlite3_bind_double(stmt_stock, 2, stod(stockData["close"].get<string>()));
-            sqlite3_bind_double(stmt_stock, 3, stod(stockData["high"].get<string>()));
-            sqlite3_bind_double(stmt_stock, 4, stod(stockData["low"].get<string>()));
-            sqlite3_bind_int(stmt_stock, 5, stoi(stockData["volume"].get<string>()));
-            sqlite3_bind_int(stmt_stock, 6, newId);
-            sqlite3_bind_int(stmt_stock, 7, stockId);
             vector<string> pairFields{"TIME_ID", "STOCK_ID"};
             vector<string> pairName{to_string(newId), to_string(stockId)};
             if (getIdsByFields("STOCK", pairFields, pairFields, pairName).empty())
             {
+                sqlite3_bind_double(stmt_stock, 1, stod(stockData["open"].get<string>()));
+                sqlite3_bind_double(stmt_stock, 2, stod(stockData["close"].get<string>()));
+                sqlite3_bind_double(stmt_stock, 3, stod(stockData["high"].get<string>()));
+                sqlite3_bind_double(stmt_stock, 4, stod(stockData["low"].get<string>()));
+                sqlite3_bind_int(stmt_stock, 5, stoi(stockData["volume"].get<string>()));
+                sqlite3_bind_int(stmt_stock, 6, newId);
+                sqlite3_bind_int(stmt_stock, 7, stockId);
                 if (sqlite3_step(stmt_stock) != SQLITE_DONE)
                 {
                     cout << "insert data at time " << dataTime << " failed!" << endl;
@@ -217,7 +217,7 @@ private:
             if (i != observeFields.size() - 1)
                 command += ", ";
         }
-        command = command + " FROM " + tableName + "WHERE ";
+        command = command + " FROM " + tableName + " WHERE ";
         for (size_t i = 0; i < fields.size(); i++)
         {
             command = command + fields[i] + "=" + names[i];
@@ -226,6 +226,7 @@ private:
         }
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
+        cout << command <<endl;
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             for (size_t i = 0; i < observeFields.size(); i++)
