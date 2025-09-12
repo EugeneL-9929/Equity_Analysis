@@ -12,12 +12,14 @@
                 "-g",
                 "${workspaceFolder}\\src\\main.cpp",
                 "${workspaceFolder}\\src\\stock.cpp",
+                "${workspaceFolder}\\src\\database.cpp",
                 "${workspaceFolder}\\src\\structure.cpp",
                 "-o",
                 "${workspaceFolder}\\build\\main.exe",
                 "-L",
                 "C:\\msys64\\ucrt64\\lib",
-                "-lcurl"
+                "-lcurl",
+                "-lsqlite3"
             ],
             "options": {
                 "cwd": "${fileDirname}"
