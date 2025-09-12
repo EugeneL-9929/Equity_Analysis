@@ -93,28 +93,33 @@ public:
         sqlite3_prepare_v2(this->database, command_name.c_str(), -1, &stmt_name, nullptr);
         sqlite3_prepare_v2(this->database, command_time.c_str(), -1, &stmt_time, nullptr);
         sqlite3_prepare_v2(this->database, command_stock.c_str(), -1, &stmt_stock, nullptr);
+
         sqlite3_bind_text(stmt_name, 1, stockName.c_str(), -1, SQLITE_TRANSIENT);
-        if (sqlite3_step(stmt_name) != SQLITE_DONE)
+        if (getIdByField("STOCKNAME", "NAME", stockName) == -1)
         {
-            cout << "insert stock name " << stockName << " failed!" << endl;
-            cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+            if (sqlite3_step(stmt_name) != SQLITE_DONE)
+            {
+                cout << "insert stock name " << stockName << " failed!" << endl;
+                cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+            }
+            sqlite3_reset(stmt_name);
         }
-        sqlite3_reset(stmt_name);
-        
         int stockId = this->getIdByField("STOCKNAME", "NAME", stockName);
+
         for (const auto &data : jsonData.items())
         {
             string dataTime = data.key();
             auto stockData = data.value();
             sqlite3_bind_text(stmt_time, 1, dataTime.c_str(), -1, SQLITE_TRANSIENT);
-
-            if (sqlite3_step(stmt_time) != SQLITE_DONE)
+            if (getIdByField("STOCKNAME", "NAME", stockName) == -1)
             {
-                cout << "insert time " << dataTime << " failed!" << endl;
-                cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+                if (sqlite3_step(stmt_time) != SQLITE_DONE)
+                {
+                    cout << "insert time " << dataTime << " failed!" << endl;
+                    cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+                }
+                sqlite3_reset(stmt_time);
             }
-            sqlite3_reset(stmt_time);
-            
             int newId = this->getIdByField("TIME", "DATA_TIME", dataTime);
             sqlite3_bind_double(stmt_stock, 1, stod(stockData["open"].get<string>()));
             sqlite3_bind_double(stmt_stock, 2, stod(stockData["close"].get<string>()));
@@ -176,8 +181,8 @@ private:
 
     int getIdByField(string tableName, string field, string name)
     {
-        int returnValue{};
-        string command = "SELECT ID FROM " + tableName + " WHERE " + field +"=?";
+        int returnValue{-1};
+        string command = "SELECT ID FROM " + tableName + " WHERE " + field + "=?";
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
         sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_TRANSIENT);
