@@ -111,7 +111,7 @@ public:
             string dataTime = data.key();
             auto stockData = data.value();
             sqlite3_bind_text(stmt_time, 1, dataTime.c_str(), -1, SQLITE_TRANSIENT);
-            if (getIdByField("STOCKNAME", "NAME", stockName) == -1)
+            if (getIdByField("TIME", "DATA_TIME", dataTime) == -1)
             {
                 if (sqlite3_step(stmt_time) != SQLITE_DONE)
                 {

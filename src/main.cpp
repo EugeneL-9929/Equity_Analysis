@@ -16,8 +16,8 @@ int main()
 
     Database db{"../sqlite/stock.sqlite"};
 
-    // AV::Stock stockQQQ{"QQQ"};
-    // db.addStockTable(stockQQQ.getMarketData(), "QQQ");
+    AV::Stock stockQQQ{"QQQ"};
+    db.addStockTable(stockQQQ.getMarketData(), "QQQ");
 
     AV::Stock stockSPY{"SPY"};
     db.addStockTable(stockSPY.getMarketData(), "SPY");
