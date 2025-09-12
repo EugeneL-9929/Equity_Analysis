@@ -93,35 +93,41 @@ public:
         sqlite3_prepare_v2(this->database, command_name.c_str(), -1, &stmt_name, nullptr);
         sqlite3_prepare_v2(this->database, command_time.c_str(), -1, &stmt_time, nullptr);
         sqlite3_prepare_v2(this->database, command_stock.c_str(), -1, &stmt_stock, nullptr);
+        sqlite3_bind_text(stmt_name, 1, stockName.c_str(), -1, SQLITE_TRANSIENT);
         if (sqlite3_step(stmt_name) != SQLITE_DONE)
         {
             cout << "insert stock name " << stockName << " failed!" << endl;
             cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
         }
-        int stockId = this->getNameId("STOCKNAME", stockName);
+        sqlite3_reset(stmt_name);
+        
+        int stockId = this->getIdByField("STOCKNAME", "NAME", stockName);
         for (const auto &data : jsonData.items())
         {
-            const string &dataTime = data.key();
-            const auto &stockData = data.value();
+            string dataTime = data.key();
+            auto stockData = data.value();
             sqlite3_bind_text(stmt_time, 1, dataTime.c_str(), -1, SQLITE_TRANSIENT);
-            cout << stockData << endl;
+
             if (sqlite3_step(stmt_time) != SQLITE_DONE)
             {
                 cout << "insert time " << dataTime << " failed!" << endl;
                 cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
             }
-            int newId = this->latestId("TIME");
-            sqlite3_bind_double(stmt_stock, 1, stockData["open"].get<double>());
-            sqlite3_bind_double(stmt_stock, 2, stockData["close"].get<double>());
-            sqlite3_bind_double(stmt_stock, 3, stockData["high"].get<double>());
-            sqlite3_bind_double(stmt_stock, 4, stockData["low"].get<double>());
-            sqlite3_bind_int(stmt_stock, 5, stockData["volume"].get<int>());
+            sqlite3_reset(stmt_time);
+            
+            int newId = this->getIdByField("TIME", "DATA_TIME", dataTime);
+            sqlite3_bind_double(stmt_stock, 1, stod(stockData["open"].get<string>()));
+            sqlite3_bind_double(stmt_stock, 2, stod(stockData["close"].get<string>()));
+            sqlite3_bind_double(stmt_stock, 3, stod(stockData["high"].get<string>()));
+            sqlite3_bind_double(stmt_stock, 4, stod(stockData["low"].get<string>()));
+            sqlite3_bind_int(stmt_stock, 5, stoi(stockData["volume"].get<string>()));
             sqlite3_bind_int(stmt_stock, 6, newId);
             sqlite3_bind_int(stmt_stock, 7, stockId);
             if (sqlite3_step(stmt_stock) != SQLITE_DONE)
             {
                 cout << "insert data at time " << dataTime << " failed!" << endl;
             }
+            sqlite3_reset(stmt_stock);
         }
         sqlite3_finalize(stmt_name);
         sqlite3_finalize(stmt_time);
@@ -164,13 +170,14 @@ private:
         {
             cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
         }
+        sqlite3_finalize(stmt);
         return returnValue;
     }
 
-    int getNameId(string tableName, string name)
+    int getIdByField(string tableName, string field, string name)
     {
         int returnValue{};
-        string command = "SELECT ID FROM " + tableName + " WHERE NAME=?";
+        string command = "SELECT ID FROM " + tableName + " WHERE " + field +"=?";
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
         sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_TRANSIENT);
@@ -183,6 +190,7 @@ private:
         {
             cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
         }
+        sqlite3_finalize(stmt);
         return returnValue;
     }
 

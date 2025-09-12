@@ -1,4 +1,52 @@
 {
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: clang++ build active file",
+			"command": "/usr/bin/clang++",
+			"args": [
+                "-fcolor-diagnostics",
+                "-fansi-escape-codes",
+                "-std=c++20",
+
+                "-I/opt/homebrew/opt/curl/include",
+                "-I/opt/homebrew/opt/nlohmann-json/include",
+                "-I/opt/homebrew/opt/sqlite/include",
+
+                "-g",
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/stock.cpp",
+                "${workspaceFolder}/src/database.cpp",
+                "${workspaceFolder}/src/structure.cpp",
+                
+                "-o",
+                "${workspaceFolder}/build/main.exe",
+                
+                "-L/opt/homebrew/opt/curl/lib",
+                "-L/opt/homebrew/opt/sqlite/lib",
+
+                "-lcurl",
+                "-lsqlite3"
+			],
+			"options": {
+                "cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /usr/bin/clang++"
+		}
+	]
+}
+
+
+/*
+{
     "tasks": [
         {
             "type": "cppbuild",
@@ -36,3 +84,4 @@
     ],
     "version": "2.0.0"
 }
+*/

@@ -13,10 +13,20 @@ using namespace std;
 int main()
 {
     cout << "hello, world!" << endl;
-    AV::Stock stock{"QQQ", "TIME_SERIES_INTRADAY", "compact", "30min"};
-    nlohmann::json output = stock.getMarketData();
-    cout << output << endl;
+
     Database db{"../sqlite/stock.sqlite"};
-    db.addStockTable(output, "QQQ");
+
+    // AV::Stock stockQQQ{"QQQ"};
+    // db.addStockTable(stockQQQ.getMarketData(), "QQQ");
+
+    AV::Stock stockSPY{"SPY"};
+    db.addStockTable(stockSPY.getMarketData(), "SPY");
+
+    AV::Stock stockDIA{"DIA"};
+    db.addStockTable(stockDIA.getMarketData(), "DIA");
+
+    AV::Stock stockGLDM{"GLDM"};
+    db.addStockTable(stockGLDM.getMarketData(), "GLDM");
+
     return 0;
 }
