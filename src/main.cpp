@@ -4,6 +4,7 @@
 #include <string>
 #include "stock.cpp"
 #include "database.cpp"
+#include "../include/log.h"
 #include <sqlite3.h>
 
 using namespace std;
@@ -16,10 +17,13 @@ int main()
 
     Database db{"../sqlite/stock.sqlite"};
 
+    vector<string> selector{"QQQ", "SPY", "DIA", "GLDM"};
+    Log::logJson("Log.json");
+
+    /*
     AV::Stock stockQQQ{"QQQ"};
     db.addStockTable(stockQQQ.getMarketData(), "QQQ");
 
-    /*
     AV::Stock stockSPY{"SPY"};
     db.addStockTable(stockSPY.getMarketData(), "SPY");
 
