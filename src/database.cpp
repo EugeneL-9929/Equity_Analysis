@@ -226,7 +226,7 @@ private:
         }
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
-        cout << command <<endl;
+        // cout << command <<endl;
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             for (size_t i = 0; i < observeFields.size(); i++)
