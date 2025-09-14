@@ -2,7 +2,8 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "stock.cpp"
+#include "../include/stock.h"
+#include "../include/fx.h"
 #include "database.cpp"
 #include "../include/log.h"
 #include <sqlite3.h>
@@ -15,39 +16,43 @@ int main()
     vector<string> selectorUpdate{"QQQ", "SPY", "DIA", "GLDM"};
     Database db{"../sqlite/stock.sqlite"};
     Log::LogJson sessionJson{"../log/Log.json"};
+    Log::LogJson sessionFxUSDJson{"../log/FxUSDLog.json"};
     sessionJson.addObservable("QQQ", 0);
     sessionJson.addObservable("SPY", 0);
     sessionJson.addObservable("DIA", 0);
-    sessionJson.addObservable("GLDM", 0);
-    sessionJson.addObservable("NVDA", 0);
-    sessionJson.addObservable("AAPL", 0);
+    sessionJson.addObservable("GLDM", 25);
+    sessionJson.addObservable("NVDA", 25);
+    sessionJson.addObservable("AAPL", 25);
+    sessionFxUSDJson.addObservable("JPY", 0);
+    sessionFxUSDJson.addObservable("EUR", 0);
+    sessionFxUSDJson.addObservable("GBP", 0);
+    sessionFxUSDJson.addObservable("CNY", 0);
+    sessionFxUSDJson.addObservable("AUD", 0);
+    sessionFxUSDJson.addObservable("CHF", 25);
+    sessionFxUSDJson.addObservable("CAD", 25);
+    sessionFxUSDJson.addObservable("SGD", 25);
     for (const auto &data : sessionJson.currentState.items())
     {
         if (stoi(data.value().get<string>()) == 0)
         {
             AV::Stock *stockPtr = new AV::Stock{data.key()};
-            db.addStockTable(stockPtr->getMarketData(), data.key());
+            db.addStockTable(stockPtr->formatMarketData(), data.key());
             delete stockPtr;
         }
     }
+
+    for (const auto &data : sessionFxUSDJson.currentState.items())
+    {
+        if (stoi(data.value().get<string>()) == 0)
+        {
+            vector<string> name{data.key(), "USD"};
+            AV::Fx *fxPtr = new AV::Fx{name};
+            db.addFxTable(fxPtr->formatMarketData(), data.key());
+            delete fxPtr;
+        }
+    }
     sessionJson.update();
-
-    /*
-    nlohmann::json session = Log::logJson("Log.json");
-    cout << session << endl;
-
-    AV::Stock stockQQQ{"QQQ"};
-    db.addStockTable(stockQQQ.getMarketData(), "QQQ");
-
-    AV::Stock stockSPY{"SPY"};
-    db.addStockTable(stockSPY.getMarketData(), "SPY");
-
-    AV::Stock stockDIA{"DIA"};
-    db.addStockTable(stockDIA.getMarketData(), "DIA");
-
-    AV::Stock stockGLDM{"GLDM"};
-    db.addStockTable(stockGLDM.getMarketData(), "GLDM");
-    */
-
+    sessionFxUSDJson.update();
+    
     return 0;
 }

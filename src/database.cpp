@@ -25,6 +25,8 @@ public:
         initializeTimeTable();
         initializeStockTable();
         initializeStockNameTable();
+        initializeFxTable();
+        initializeFxNameTable();
     }
 
     void initializeTimeTable()
@@ -56,7 +58,7 @@ public:
             "TIME_ID INTEGER,"
             "STOCK_ID INTEGER,"
             "FOREIGN KEY (TIME_ID) REFERENCES TIME (ID) ON DELETE CASCADE ON UPDATE CASCADE,"
-            "FOREIGN KEY (STOCK_ID) REFERENCES EQUITY (ID) ON DELETE CASCADE ON UPDATE CASCADE);";
+            "FOREIGN KEY (STOCK_ID) REFERENCES STOCKNAME (ID) ON DELETE CASCADE ON UPDATE CASCADE);";
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
         if (sqlite3_step(stmt) == SQLITE_DONE)
@@ -77,6 +79,44 @@ public:
         sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
         if (sqlite3_step(stmt) == SQLITE_DONE)
             cout << "finish stock name table initialization!" << endl;
+        else
+            cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+        sqlite3_finalize(stmt);
+    }
+
+    void initializeFxTable()
+    {
+        string command =
+            "CREATE TABLE IF NOT EXISTS FX("
+            "ID INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,"
+            "OPEN FLOAT,"
+            "CLOSE FLOAT,"
+            "HIGH FLOAT,"
+            "LOW FLOAT,"
+            "TIME_ID INTEGER,"
+            "FX_ID INTEGER,"
+            "FOREIGN KEY (TIME_ID) REFERENCES TIME (ID) ON DELETE CASCADE ON UPDATE CASCADE,"
+            "FOREIGN KEY (FX_ID) REFERENCES FXNAME (ID) ON DELETE CASCADE ON UPDATE CASCADE);";
+        sqlite3_stmt *stmt;
+        sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+            cout << "finish fx table initialization!" << endl;
+        else
+            cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+        sqlite3_finalize(stmt);
+    }
+
+    void initializeFxNameTable()
+    {
+        string command =
+            "CREATE TABLE IF NOT EXISTS FXNAME("
+            "ID INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,"
+            "NAME VARCHAR(20) UNIQUE);"
+            "CREATE INDEX IF NOT EXISTS IDX_FXNAME ON FXNAME(NAME);";
+        sqlite3_stmt *stmt;
+        sqlite3_prepare_v2(this->database, command.c_str(), -1, &stmt, nullptr);
+        if (sqlite3_step(stmt) == SQLITE_DONE)
+            cout << "finish fx name table initialization!" << endl;
         else
             cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
         sqlite3_finalize(stmt);
@@ -145,6 +185,70 @@ public:
         sqlite3_finalize(stmt_name);
         sqlite3_finalize(stmt_time);
         sqlite3_finalize(stmt_stock);
+    }
+
+    void addFxTable(const nlohmann::json &jsonData, string fxName)
+    {
+
+        string command_name = "INSERT OR IGNORE INTO FXNAME (NAME) VALUES (?);";
+        sqlite3_stmt *stmt_name;
+        string command_time = "INSERT OR IGNORE INTO TIME (DATA_TIME) VALUES (?);";
+        sqlite3_stmt *stmt_time;
+        string command_fx = "INSERT INTO FX (OPEN, CLOSE, HIGH, LOW, TIME_ID, FX_ID) VALUES (?, ?, ?, ?, ?, ?);";
+        sqlite3_stmt *stmt_fx;
+        sqlite3_prepare_v2(this->database, command_name.c_str(), -1, &stmt_name, nullptr);
+        sqlite3_prepare_v2(this->database, command_time.c_str(), -1, &stmt_time, nullptr);
+        sqlite3_prepare_v2(this->database, command_fx.c_str(), -1, &stmt_fx, nullptr);
+
+        if (getIdByField("FXNAME", "NAME", fxName) == -1)
+        {
+            sqlite3_bind_text(stmt_name, 1, fxName.c_str(), -1, SQLITE_TRANSIENT);
+            if (sqlite3_step(stmt_name) != SQLITE_DONE)
+            {
+                cout << "insert fx name " << fxName << " failed!" << endl;
+                cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+            }
+            sqlite3_reset(stmt_name);
+        }
+        int fxId = this->getIdByField("FXNAME", "NAME", fxName);
+
+        for (const auto &data : jsonData.items())
+        {
+            string dataTime = data.key();
+            auto fxData = data.value();
+            if (getIdByField("TIME", "DATA_TIME", dataTime) == -1)
+            {
+                sqlite3_bind_text(stmt_time, 1, dataTime.c_str(), -1, SQLITE_TRANSIENT);
+                if (sqlite3_step(stmt_time) != SQLITE_DONE)
+                {
+                    cout << "insert time " << dataTime << " failed!" << endl;
+                    cout << "error lists: " << sqlite3_errmsg(this->database) << endl;
+                }
+                sqlite3_reset(stmt_time);
+            }
+            int newId = this->getIdByField("TIME", "DATA_TIME", dataTime);
+            vector<string> pairFields{"TIME_ID", "FX_ID"};
+            vector<string> pairName{to_string(newId), to_string(fxId)};
+            if (getIdsByFields("FX", pairFields, pairFields, pairName).empty())
+            {
+                sqlite3_bind_double(stmt_fx, 1, stod(fxData["open"].get<string>()));
+                sqlite3_bind_double(stmt_fx, 2, stod(fxData["close"].get<string>()));
+                sqlite3_bind_double(stmt_fx, 3, stod(fxData["high"].get<string>()));
+                sqlite3_bind_double(stmt_fx, 4, stod(fxData["low"].get<string>()));
+                sqlite3_bind_int(stmt_fx, 5, newId);
+                sqlite3_bind_int(stmt_fx, 6, fxId);
+                if (sqlite3_step(stmt_fx) != SQLITE_DONE)
+                {
+                    cout << "insert data at time " << dataTime << " failed!" << endl;
+                }
+                sqlite3_reset(stmt_fx);
+            }
+            else
+                cout << "wow! repeat!!!" << endl;
+        }
+        sqlite3_finalize(stmt_name);
+        sqlite3_finalize(stmt_time);
+        sqlite3_finalize(stmt_fx);
     }
 
     void selfDefinedSQLCommand(const string &command)

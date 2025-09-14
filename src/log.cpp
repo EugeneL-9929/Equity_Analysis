@@ -35,7 +35,11 @@ namespace Log
     {
         ofstream outfile{this->logPath};
         for (const auto &data : this->currentState.items())
+        {
+            if (stoi(data.value().get<string>()) == 25)
+                this->currentState[data.key()] = to_string(-1);
             this->currentState[data.key()] = to_string(stoi(data.value().get<string>()) + 1);
+        }
         outfile << this->currentState.dump(4);
         outfile.close();
     }
