@@ -17,20 +17,13 @@ int main()
     Database db{"../sqlite/stock.sqlite"};
     Log::LogJson sessionJson{"../log/Log.json"};
     Log::LogJson sessionFxUSDJson{"../log/FxUSDLog.json"};
-    sessionJson.addObservable("QQQ", 0);
-    sessionJson.addObservable("SPY", 0);
-    sessionJson.addObservable("DIA", 0);
-    sessionJson.addObservable("GLDM", 25);
-    sessionJson.addObservable("NVDA", 25);
-    sessionJson.addObservable("AAPL", 25);
-    sessionFxUSDJson.addObservable("JPY", 0);
-    sessionFxUSDJson.addObservable("EUR", 0);
-    sessionFxUSDJson.addObservable("GBP", 0);
-    sessionFxUSDJson.addObservable("CNY", 0);
-    sessionFxUSDJson.addObservable("AUD", 0);
-    sessionFxUSDJson.addObservable("CHF", 25);
-    sessionFxUSDJson.addObservable("CAD", 25);
-    sessionFxUSDJson.addObservable("SGD", 25);
+    Log::LogJson sessionFxHKDJson{"../log/FxHKDLog.json"};
+    sessionJson.addObservable("QQQ", 5);
+
+    sessionFxUSDJson.addObservable("JPY", 4);
+
+    sessionFxHKDJson.addObservable("JPY", 0);
+
     for (const auto &data : sessionJson.currentState.items())
     {
         if (stoi(data.value().get<string>()) == 0)
@@ -47,12 +40,24 @@ int main()
         {
             vector<string> name{data.key(), "USD"};
             AV::Fx *fxPtr = new AV::Fx{name};
-            db.addFxTable(fxPtr->formatMarketData(), data.key());
+            db.addFxTable(fxPtr->formatMarketData(), data.key()+"USD");
+            delete fxPtr;
+        }
+    }
+
+    for (const auto &data : sessionFxHKDJson.currentState.items())
+    {
+        if (stoi(data.value().get<string>()) == 0)
+        {
+            vector<string> name{data.key(), "HKD"};
+            AV::Fx *fxPtr = new AV::Fx{name};
+            db.addFxTable(fxPtr->formatMarketData(), data.key()+"HKD");
             delete fxPtr;
         }
     }
     sessionJson.update();
     sessionFxUSDJson.update();
-    
+    sessionFxHKDJson.update();
+
     return 0;
 }
