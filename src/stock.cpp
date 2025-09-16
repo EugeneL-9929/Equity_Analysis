@@ -91,14 +91,30 @@ namespace AV
             cout << "Initialize CURL failed!" << endl;
             return "";
         }
-
+        // cout << this->query_url << endl;
+        // cout << readBuffer << endl;
+        // cout << "Type: " << typeid(decltype(readBuffer)).name() << endl;
         return readBuffer;
     }
 
     nlohmann::json Stock::formatMarketData()
     {
         string readBuffer{this->getMarketData()};
-        nlohmann::json returnValue = nlohmann::json::parse(readBuffer)["Time Series (" + this->intervalGetPurpose + ")"];
+        nlohmann::json returnValue{};
+        nlohmann::json temp{nlohmann::json::parse(readBuffer)};
+        // cout << temp[0] << endl;
+        for (const auto &data : temp[0].items())
+        {
+            // cout << "Type: " << typeid(decltype(data.key())).name() << endl;
+            if (!data.key().empty())
+            {
+                if (data.key().find("Time") == 0)
+                {
+                    // cout << data.key() << endl;
+                    returnValue = data.value();
+                }
+            }
+        }
         for (const auto &data : returnValue.items())
         {
             if (data.value().contains("1. open"))

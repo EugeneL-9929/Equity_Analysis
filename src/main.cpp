@@ -18,8 +18,12 @@ int main()
     Log::LogJson sessionJson{"../log/Log.json"};
     Log::LogJson sessionFxUSDJson{"../log/FxUSDLog.json"};
     Log::LogJson sessionFxHKDJson{"../log/FxHKDLog.json"};
-    sessionJson.addObservable("QQQ", 5);
-
+    sessionJson.addObservable("TSLA", 0);
+    sessionJson.addObservable("MSFT", 0);
+    sessionJson.addObservable("CRCL", 0);
+    sessionJson.addObservable("NFLX", 0);
+    sessionJson.addObservable("SNPS", 0);
+    
     sessionFxUSDJson.addObservable("JPY", 4);
 
     sessionFxHKDJson.addObservable("JPY", 0);
